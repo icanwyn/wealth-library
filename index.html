@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Wealth 財 — A Japanese-aesthetic digital library of the top 100 works of financial literature."
+    />
+    <title>Wealth 財 — Top 100 Financial Literature</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Sans+JP:wght@300;400;500&family=Noto+Serif+JP:wght@300;400;500;600&family=Shippori+Mincho:wght@400;500;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/hero.css" />
+    <link rel="stylesheet" href="css/styles.css" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>財</text></svg>" />
+  </head>
+  <body>
+    <nav class="site-nav" aria-label="Primary">
+      <a class="nav-brand" href="#hero">
+        Wealth <span class="jp">財</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="#hero">Home</a></li>
+        <li><a href="#library">Library</a></li>
+        <li><a href="#about">About</a></li>
+      </ul>
+      <div class="nav-search">
+        <label class="visually-hidden" for="search-input">Search books</label>
+        <input
+          id="search-input"
+          type="search"
+          placeholder="Search title, author…"
+          autocomplete="off"
+        />
+      </div>
+    </nav>
+
+    <!-- Dynamic Japanese hero — WealthHero (css/hero.css + js/hero.js) -->
+    <header id="hero" class="hero" role="banner">
+      <div class="hero__motifs" aria-hidden="true">
+        <div class="hero__seigaiha"></div>
+        <div class="hero__mountains hero__mountains--far"></div>
+        <div class="hero__mountains hero__mountains--near"></div>
+        <div class="hero__rays"></div>
+      </div>
+      <canvas class="hero__canvas" aria-hidden="true"></canvas>
+
+      <p class="hero__side-kanji hero__side-kanji--left" aria-hidden="true">静思の書架</p>
+      <p class="hero__side-kanji hero__side-kanji--right" aria-hidden="true">百巻の知恵</p>
+
+      <div class="hero__content">
+        <div class="hero__eyebrow">
+          <span class="hero__rule"></span>
+          <span class="hero__eyebrow-text">Digital Library</span>
+          <span class="hero__seal" title="Wealth">財</span>
+          <span class="hero__eyebrow-text">Est. Collection</span>
+          <span class="hero__rule"></span>
+        </div>
+
+        <h1 class="hero__title-block">
+          <span class="hero__kanji">財</span>
+          <span class="hero__latin">Wealth</span>
+          <span class="hero__subtitle">金融文学百選</span>
+        </h1>
+
+        <div class="hero__accent" aria-hidden="true">
+          <span class="hero__accent-line"></span>
+          <span class="hero__accent-diamond"></span>
+          <span class="hero__accent-line"></span>
+        </div>
+
+        <p class="hero__tagline">
+          A quiet estate library of the <em>hundred works</em> that shaped how
+          the world thinks about money, risk, and freedom.
+          <span class="hero__tagline-jp">金銭・リスク・自由をめぐる百の智慧</span>
+        </p>
+
+        <div class="hero__actions">
+          <a class="hero__cta" href="#library">
+            <span>Enter the Library</span>
+            <span class="hero__cta-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></svg>
+            </span>
+          </a>
+          <a class="hero__cta hero__cta--ghost" href="#library">書架をひらく</a>
+        </div>
+      </div>
+
+      <a class="hero__scroll" href="#library" aria-label="Scroll to library shelves">
+        <span class="hero__scroll-label">Browse</span>
+        <span class="hero__scroll-line" aria-hidden="true"></span>
+      </a>
+    </header>
+
+    <main>
+      <section id="library" class="library seigaiha">
+        <div class="library-header">
+          <span class="section-mark">蔵書 · Collection</span>
+          <h2>Top 100 Financial Literature</h2>
+          <p>
+            Hover a volume to preview. Open it for the essence, ten core
+            insights, and real-world applications for life today.
+          </p>
+          <p id="book-count" style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--gold)">
+            —
+          </p>
+        </div>
+
+        <div id="filters" class="filters" role="toolbar" aria-label="Filter by category"></div>
+        <div id="shelves" class="shelves" aria-live="polite"></div>
+      </section>
+
+      <section id="about" class="library" style="padding-top: 0">
+        <div class="library-header">
+          <span class="section-mark">案内 · About</span>
+          <h2>How to use this library</h2>
+          <p>
+            Each spine is a classic of financial thought—from Graham and Buffett
+            to Kahneman, Taleb, and modern personal finance. Summaries highlight
+            the meat of the book; expanded panels connect ideas to emergency
+            funds, index investing, career optionality, and mindful spending in
+            the 2020s. This is an educational companion, not personalized
+            financial advice.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-brand">Wealth <span>財</span></div>
+      <div class="footer-line"></div>
+      <p>
+        Top 100 financial literature · Designed with a Japanese aesthetic of
+        quiet attention — washi, sumi, and gold.
+      </p>
+      <p style="opacity: 0.5; font-size: 0.7rem">
+        © <span id="year"></span> Wealth Library · For learning and reflection
+      </p>
+    </footer>
+
+    <!-- Book detail modal -->
+    <div id="modal-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-label="Book details">
+      <div id="modal" class="modal"></div>
+    </div>
+
+    <style>
+      .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        border: 0;
+      }
+    </style>
+
+    <script src="js/books.js"></script>
+    <script src="js/books-part2.js"></script>
+    <script src="js/hero.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+      document.getElementById("year").textContent = new Date().getFullYear();
+    </script>
+  </body>
+</html>
