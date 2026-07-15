@@ -137,26 +137,15 @@
 
   /**
    * Prep text for speech.
-   * Do NOT read chorus or verse sections — keep cold open, bridge, and outro only.
-   * Never announce section labels out loud.
+   * Never say song structure out loud — strip [Chorus] / [Verse] / [Bridge] /
+   * [Outro] labels (and bare "Chorus." / "Verse 1" lines). Keep all lyrics.
    */
   function cleanText(text) {
-    let s = String(text || "").replace(/\r\n/g, "\n");
-
-    // Drop every [Chorus] block (label + lyrics)
-    s = s.replace(
-      /\[Chorus\][\s\S]*?(?=\[(?:Chorus|Verse|Bridge|Outro)\b|\s*$)/gi,
-      "\n"
-    );
-    // Drop [Verse 1], [Verse 2], etc. — but keep [Verse 3 / Outro] as outro
-    s = s.replace(
-      /\[Verse\s*(?!\s*\d+\s*\/\s*Outro)[^\]]*\][\s\S]*?(?=\[(?:Chorus|Verse|Bridge|Outro)\b|\s*$)/gi,
-      "\n"
-    );
-
-    // Strip remaining tags (Bridge / Outro / Verse…Outro) — keep the lines under them
-    s = s
+    return String(text || "")
+      .replace(/\r\n/g, "\n")
+      // Remove [Chorus], [Verse 1], [Bridge] (notes…), [Verse 3 / Outro], etc.
       .replace(/\[(?:Chorus|Verse[^\]]*|Bridge[^\]]*|Outro[^\]]*)\]/gi, "")
+      // Remove bare structure-only lines
       .replace(
         /^\s*(?:Chorus|Verse\s*\d+(?:\s*\/\s*Outro)?|Bridge|Outro)\s*[.:]?\s*$/gim,
         ""
@@ -171,8 +160,6 @@
       .replace(/[ \t]+/g, " ")
       .replace(/\n /g, "\n")
       .trim();
-
-    return s;
   }
 
   function chunkText(text, maxLen) {
