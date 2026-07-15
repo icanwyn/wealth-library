@@ -1533,3 +1533,15 @@ body::before {
     transition-duration: 0.01ms !important;
   }
 }
+
+.app-expand .insight-detail {
+  font-size: 0.95rem;
+  color: var(--sumi-soft);
+  line-height: 1.75;
+}
+.app-expand .insight-detail p {
+  margin: 0 0 0.9rem;
+}
+.app-expand .insight-detail p:last-child {
+  margin-bottom: 0;
+}
