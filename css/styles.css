@@ -136,20 +136,22 @@ body::before {
   font-family: var(--font-sans);
   font-size: 0.8rem;
   letter-spacing: 0.06em;
-  padding: 0.4rem 0.9rem;
-  border: 1px solid rgba(90, 85, 76, 0.25);
-  background: var(--cream);
-  color: var(--sumi);
+  padding: 0.45rem 1rem;
+  border: 1px solid var(--vermillion);
+  background: var(--vermillion);
+  color: #fff;
   border-radius: 100px;
   cursor: pointer;
-  transition: background 0.2s, border-color 0.2s, color 0.2s;
+  transition: background 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s;
   white-space: nowrap;
+  box-shadow: 0 2px 10px rgba(194, 59, 34, 0.28);
 }
 
 .nav-home-btn:hover {
-  border-color: var(--vermillion);
-  color: var(--vermillion);
-  background: rgba(194, 59, 34, 0.06);
+  border-color: #a8321c;
+  background: #a8321c;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(194, 59, 34, 0.35);
 }
 
 .nav-home-icon {
@@ -235,11 +237,12 @@ body::before {
   flex-wrap: wrap;
   gap: 0.75rem 1.25rem;
   margin: 0 auto 1.25rem;
-  padding: 0.65rem 1.25rem;
+  padding: 0.55rem 0.65rem 0.55rem 0.55rem;
   max-width: 720px;
-  background: rgba(26, 26, 26, 0.04);
-  border: 1px solid rgba(196, 163, 90, 0.25);
+  background: linear-gradient(135deg, rgba(194, 59, 34, 0.1), rgba(196, 163, 90, 0.14));
+  border: 1px solid rgba(194, 59, 34, 0.35);
   border-radius: 100px;
+  box-shadow: 0 4px 18px rgba(194, 59, 34, 0.1);
 }
 
 .library-back-bar[hidden] {
@@ -249,28 +252,33 @@ body::before {
 .back-to-library {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.45rem;
   font-family: var(--font-sans);
-  font-size: 0.82rem;
+  font-size: 0.88rem;
+  font-weight: 500;
   letter-spacing: 0.04em;
-  padding: 0.35rem 0.9rem;
+  padding: 0.55rem 1.2rem;
   border: none;
-  background: var(--sumi);
-  color: var(--washi);
+  background: linear-gradient(135deg, var(--vermillion) 0%, #a8321c 100%);
+  color: #fff;
   border-radius: 100px;
   cursor: pointer;
-  transition: background 0.2s, transform 0.2s;
+  transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 3px 12px rgba(194, 59, 34, 0.35);
 }
 
 .back-to-library:hover {
-  background: var(--vermillion);
+  background: linear-gradient(135deg, #d4573f 0%, var(--vermillion) 100%);
   transform: translateX(-2px);
+  box-shadow: 0 5px 16px rgba(194, 59, 34, 0.45);
 }
 
 .back-bar-context {
   font-family: var(--font-serif);
-  font-size: 0.9rem;
-  color: var(--ink-muted);
+  font-size: 0.95rem;
+  color: var(--sumi);
+  padding-right: 0.85rem;
+  font-weight: 500;
 }
 
 .filters {
@@ -410,7 +418,7 @@ body::before {
   gap: 8px;
   /* Room for tooltip (~120px) + hover lift + taller books */
   padding: 9.5rem 1.25rem 0;
-  min-height: calc(280px + 9.5rem);
+  min-height: calc(320px + 9.5rem);
   background: linear-gradient(
     180deg,
     rgba(61, 50, 41, 0.06) 0%,
@@ -459,8 +467,8 @@ body::before {
 .book {
   position: relative;
   flex: 0 0 auto;
-  width: var(--book-w, 62px);
-  height: var(--book-h, 300px);
+  width: var(--book-w, 70px);
+  height: var(--book-h, 340px);
   cursor: pointer;
   /* Tooltip stays upright — 3D tilt applied to spine only */
   transform-style: flat;
@@ -538,20 +546,21 @@ body::before {
   writing-mode: vertical-rl;
   text-orientation: mixed;
   font-family: var(--font-serif);
-  font-size: var(--spine-fs, 0.7rem);
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  color: rgba(247, 243, 235, 0.95);
+  font-size: var(--spine-fs, 0.9rem);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: rgba(255, 252, 246, 0.98);
   /* Full title — height is sized in JS to fit */
   max-height: none;
   overflow: visible;
   white-space: nowrap;
-  line-height: 1.15;
+  line-height: 1.2;
   z-index: 1;
-  margin-top: 10px;
+  margin-top: 12px;
   flex: 1 1 auto;
   display: block;
   text-align: left;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
 }
 
 .book-year-spine {
@@ -560,11 +569,12 @@ body::before {
   left: 0;
   right: 0;
   text-align: center;
-  font-size: 0.62rem;
+  font-size: 0.72rem;
   font-variant-numeric: tabular-nums;
-  color: rgba(247, 243, 235, 0.6);
+  color: rgba(247, 243, 235, 0.72);
   letter-spacing: 0.06em;
   z-index: 1;
+  font-weight: 500;
 }
 
 /* Hover: tilt spine back; tooltip stays flat and fully visible */
@@ -819,39 +829,43 @@ body::before {
 .modal-back-library {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.5rem;
   font-family: var(--font-sans);
-  font-size: 0.82rem;
+  font-size: 0.88rem;
+  font-weight: 500;
   letter-spacing: 0.05em;
-  padding: 0.5rem 1rem;
+  padding: 0.6rem 1.2rem;
   margin-bottom: 1.25rem;
-  border: 1px solid rgba(90, 85, 76, 0.2);
-  background: transparent;
-  color: var(--sumi);
+  border: 1px solid var(--vermillion);
+  background: linear-gradient(135deg, var(--vermillion) 0%, #a8321c 100%);
+  color: #fff;
   border-radius: 100px;
   cursor: pointer;
-  transition: background 0.2s, border-color 0.2s, color 0.2s;
+  transition: background 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s, transform 0.2s;
+  box-shadow: 0 3px 12px rgba(194, 59, 34, 0.35);
 }
 
 .modal-back-library:hover {
-  border-color: var(--vermillion);
-  color: var(--vermillion);
-  background: rgba(194, 59, 34, 0.05);
+  border-color: #d4573f;
+  color: #fff;
+  background: linear-gradient(135deg, #d4573f 0%, var(--vermillion) 100%);
+  box-shadow: 0 5px 16px rgba(194, 59, 34, 0.45);
+  transform: translateX(-2px);
 }
 
 .modal-back-library--bottom {
   margin: 2rem 0 0;
   width: 100%;
   justify-content: center;
-  background: var(--sumi);
-  color: var(--washi);
-  border-color: var(--sumi);
+  background: linear-gradient(135deg, var(--vermillion) 0%, #a8321c 100%);
+  color: #fff;
+  border-color: var(--vermillion);
 }
 
 .modal-back-library--bottom:hover {
-  background: var(--vermillion);
-  border-color: var(--vermillion);
-  color: var(--washi);
+  background: linear-gradient(135deg, #d4573f 0%, var(--vermillion) 100%);
+  border-color: #d4573f;
+  color: #fff;
 }
 
 .modal-back-arrow {

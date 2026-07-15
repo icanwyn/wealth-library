@@ -180,24 +180,25 @@
 
   function spineMetrics(title) {
     const len = (title || "").length;
-    let fontRem = 0.72;
-    let pxPerChar = 9.4;
+    // Larger spine type; height scales so full titles still fit
+    let fontRem = 0.92;
+    let pxPerChar = 12.2;
     if (len > 38) {
-      fontRem = 0.56;
-      pxPerChar = 7.4;
+      fontRem = 0.74;
+      pxPerChar = 9.6;
     } else if (len > 28) {
-      fontRem = 0.62;
-      pxPerChar = 8.2;
+      fontRem = 0.8;
+      pxPerChar = 10.6;
     } else if (len > 18) {
-      fontRem = 0.68;
-      pxPerChar = 8.9;
+      fontRem = 0.86;
+      pxPerChar = 11.4;
     }
 
-    const chrome = 78;
+    const chrome = 86;
     const height = Math.round(
-      Math.min(460, Math.max(260, chrome + len * pxPerChar + 12))
+      Math.min(520, Math.max(300, chrome + len * pxPerChar + 16))
     );
-    const width = len > 32 ? 72 : len > 20 ? 66 : 60;
+    const width = len > 32 ? 82 : len > 20 ? 74 : 68;
     return { height, width, fontRem };
   }
 
