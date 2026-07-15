@@ -383,7 +383,304 @@
     return escapeHtml(text || "").replace(/\n\n/g, "</p><p>").replace(/\n/g, "<br/>");
   }
 
+  /** Build a natural spoken script for a book */
+  function buildListenScript(book, mode) {
+    const insights = getInsights(book);
+    const applications = getApplications(book, insights);
+    const script = [];
+
+    script.push({
+      label: "Introduction",
+      text: `${book.title}, by ${book.author}${
+        book.year ? `, published in ${book.year}` : ""
+      }.`,
+    });
+
+    if (mode === "essence" || mode === "full") {
+      script.push({
+        label: "Essence",
+        text: book.essence || book.short || "",
+      });
+    }
+
+    if (mode === "insights" || mode === "full") {
+      script.push({
+        label: "The ten core insights",
+        text: "Here are the ten essential ideas from the book.",
+      });
+      insights.forEach((ins, i) => {
+        script.push({
+          label: `Insight ${i + 1}`,
+          text: `${ins.headline || ""} ${ins.detail || ""}`.trim(),
+        });
+        if (ins.application && (mode === "full" || mode === "insights")) {
+          script.push({
+            label: `Application for insight ${i + 1}`,
+            text: `${ins.application.title || ""}. ${ins.application.body || ""}`.trim(),
+          });
+        }
+      });
+    }
+
+    if (mode === "applications" || mode === "full") {
+      if (mode === "applications") {
+        script.push({
+          label: "Lifestyle applications",
+          text: "Key practices you can use in everyday life.",
+        });
+      }
+      applications.forEach((a, i) => {
+        script.push({
+          label: `Practice ${i + 1}`,
+          text: `${a.title || ""}. ${a.body || ""}`.trim(),
+        });
+      });
+    }
+
+    if (mode === "full") {
+      script.push({
+        label: "Closing",
+        text: `That concludes the guided reading of ${book.title}. Return to the shelves when you are ready for the next volume.`,
+      });
+    }
+
+    return script.filter((s) => (s.text || "").trim().length > 0);
+  }
+
+  function ttsAvailable() {
+    return window.WealthTTS && window.WealthTTS.supported();
+  }
+
+  function bindTtsPlayer(modal, book) {
+    const player = modal.querySelector("[data-tts-player]");
+    if (!player) return;
+
+    if (!ttsAvailable()) {
+      player.classList.add("tts-unsupported");
+      const status = player.querySelector("[data-tts-status]");
+      if (status) {
+        status.textContent =
+          "Audio reading needs a browser with speech support (Chrome, Edge, Safari, or Firefox).";
+      }
+      return;
+    }
+
+    const btnPlay = player.querySelector("[data-tts-play]");
+    const btnPause = player.querySelector("[data-tts-pause]");
+    const btnStop = player.querySelector("[data-tts-stop]");
+    const modeSelect = player.querySelector("[data-tts-mode]");
+    const voiceSelect = player.querySelector("[data-tts-voice]");
+    const rateRange = player.querySelector("[data-tts-rate]");
+    const rateLabel = player.querySelector("[data-tts-rate-label]");
+    const statusEl = player.querySelector("[data-tts-status]");
+    const progressEl = player.querySelector("[data-tts-progress]");
+
+    // Populate voices
+    const fillVoices = () => {
+      if (!voiceSelect) return;
+      const voices = window.WealthTTS.listVoices();
+      const best = window.WealthTTS.pickBestVoice();
+      const current = voiceSelect.value;
+      voiceSelect.innerHTML = voices
+        .map(
+          (v) =>
+            `<option value="${escapeHtml(v.voiceURI)}"${
+              best && v.voiceURI === best.voiceURI ? " selected" : ""
+            }>${escapeHtml(v.name)} (${escapeHtml(v.lang)})</option>`
+        )
+        .join("");
+      if (current) voiceSelect.value = current;
+      else if (best) voiceSelect.value = best.voiceURI;
+    };
+    fillVoices();
+    setTimeout(fillVoices, 400);
+    setTimeout(fillVoices, 1200);
+
+    const updateUI = (st) => {
+      if (!st) st = window.WealthTTS.getStatus();
+      player.classList.toggle("is-playing", !!st.speaking);
+      player.classList.toggle("is-paused", !!st.paused);
+      player.classList.toggle("is-active", !!st.active);
+      if (btnPlay) {
+        btnPlay.disabled = !!st.speaking;
+        btnPlay.setAttribute("aria-pressed", st.speaking ? "true" : "false");
+      }
+      if (btnPause) {
+        btnPause.disabled = !st.active;
+        btnPause.textContent = st.paused ? "Resume" : "Pause";
+      }
+      if (btnStop) btnStop.disabled = !st.active;
+      if (progressEl) {
+        const pct = Math.round((st.progress || 0) * 100);
+        progressEl.style.width = pct + "%";
+        progressEl.parentElement?.setAttribute("aria-valuenow", String(pct));
+      }
+      if (statusEl && !st.active && !player.dataset.userMsg) {
+        const v = st.voice;
+        statusEl.textContent = v
+          ? `Ready · ${v.name}`
+          : "Ready · tap Listen to begin";
+      }
+    };
+
+    const unsub = window.WealthTTS.on((event, payload) => {
+      if (event === "status" || event === "start" || event === "end" || event === "stop") {
+        delete player.dataset.userMsg;
+        updateUI(event === "status" ? payload : window.WealthTTS.getStatus());
+      }
+      if (event === "chunk" && statusEl && payload) {
+        player.dataset.userMsg = "1";
+        statusEl.textContent = `Reading ${payload.index + 1} of ${payload.total}…`;
+      }
+      if (event === "end" && statusEl) {
+        player.dataset.userMsg = "1";
+        statusEl.textContent = "Finished · press Listen to hear again";
+      }
+      if (event === "unsupported" && statusEl) {
+        statusEl.textContent = "Speech is not available in this browser.";
+      }
+    });
+
+    // Store cleanup on modal element
+    modal._ttsUnsub = unsub;
+
+    btnPlay?.addEventListener("click", () => {
+      const mode = modeSelect?.value || "full";
+      const rate = rateRange ? Number(rateRange.value) : 0.95;
+      if (voiceSelect?.value) window.WealthTTS.setVoice(voiceSelect.value);
+      window.WealthTTS.setRate(rate);
+      const script = buildListenScript(book, mode);
+      const ok = window.WealthTTS.speak(script, { rate });
+      if (!ok && statusEl) {
+        player.dataset.userMsg = "1";
+        statusEl.textContent = "Nothing to read for this selection.";
+      }
+    });
+
+    btnPause?.addEventListener("click", () => {
+      const st = window.WealthTTS.getStatus();
+      if (st.paused) window.WealthTTS.resume();
+      else window.WealthTTS.pause();
+    });
+
+    btnStop?.addEventListener("click", () => {
+      window.WealthTTS.stop();
+      if (statusEl) {
+        player.dataset.userMsg = "1";
+        statusEl.textContent = "Stopped";
+      }
+    });
+
+    rateRange?.addEventListener("input", () => {
+      const r = Number(rateRange.value);
+      if (rateLabel) rateLabel.textContent = r.toFixed(2) + "×";
+      window.WealthTTS.setRate(r);
+    });
+
+    voiceSelect?.addEventListener("change", () => {
+      window.WealthTTS.setVoice(voiceSelect.value);
+      const st = window.WealthTTS.getStatus();
+      if (statusEl && !st.active) {
+        statusEl.textContent = `Voice · ${voiceSelect.selectedOptions[0]?.text || "default"}`;
+      }
+    });
+
+    // Per-insight listen buttons
+    $$("[data-tts-insight]", modal).forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const idx = Number(btn.dataset.ttsInsight);
+        const insights = getInsights(book);
+        const ins = insights[idx];
+        if (!ins) return;
+        if (voiceSelect?.value) window.WealthTTS.setVoice(voiceSelect.value);
+        const rate = rateRange ? Number(rateRange.value) : 0.95;
+        window.WealthTTS.setRate(rate);
+        const script = [
+          {
+            label: `Insight ${idx + 1}`,
+            text: `${ins.headline || ""} ${ins.detail || ""}`.trim(),
+          },
+        ];
+        if (ins.application) {
+          script.push({
+            label: "Real-world application",
+            text: `${ins.application.title || ""}. ${ins.application.body || ""}`.trim(),
+          });
+        }
+        window.WealthTTS.speak(script, { rate });
+        // Expand the insight being read
+        const li = modal.querySelector(`.meat-list li[data-index="${idx}"]`);
+        if (li) {
+          $$(".meat-list li", modal).forEach((x) => x.classList.remove("expanded"));
+          li.classList.add("expanded");
+          li.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+      });
+    });
+
+    updateUI();
+  }
+
+  function ttsPlayerHtml() {
+    const ok = ttsAvailable();
+    return `
+      <div class="tts-player" data-tts-player ${ok ? "" : 'data-unsupported="1"'}>
+        <div class="tts-player-header">
+          <div class="tts-player-title">
+            <span class="tts-icon" aria-hidden="true">🎧</span>
+            <div>
+              <strong>Listen</strong>
+              <span class="tts-sub">Natural voice reading · 音声朗読</span>
+            </div>
+          </div>
+          <div class="tts-wave" aria-hidden="true">
+            <span></span><span></span><span></span><span></span><span></span>
+          </div>
+        </div>
+
+        <div class="tts-controls">
+          <button type="button" class="tts-btn tts-btn-play" data-tts-play ${ok ? "" : "disabled"}>
+            <span class="tts-btn-icon" aria-hidden="true">▶</span> Listen
+          </button>
+          <button type="button" class="tts-btn tts-btn-ghost" data-tts-pause disabled>Pause</button>
+          <button type="button" class="tts-btn tts-btn-ghost" data-tts-stop disabled>Stop</button>
+        </div>
+
+        <div class="tts-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Reading progress">
+          <div class="tts-progress-fill" data-tts-progress></div>
+        </div>
+        <p class="tts-status" data-tts-status>${
+          ok ? "Ready · tap Listen to begin" : "Loading speech engine…"
+        }</p>
+
+        <div class="tts-options">
+          <label class="tts-field">
+            <span>Read</span>
+            <select data-tts-mode>
+              <option value="full">Full guide (essence, insights &amp; applications)</option>
+              <option value="essence">Essence only</option>
+              <option value="insights">Top 10 insights &amp; applications</option>
+              <option value="applications">Lifestyle applications only</option>
+            </select>
+          </label>
+          <label class="tts-field">
+            <span>Voice</span>
+            <select data-tts-voice></select>
+          </label>
+          <label class="tts-field tts-field-rate">
+            <span>Speed <em data-tts-rate-label>0.95×</em></span>
+            <input type="range" data-tts-rate min="0.75" max="1.25" step="0.05" value="0.95" />
+          </label>
+        </div>
+      </div>
+    `;
+  }
+
   function openModal(book) {
+    // Stop any previous reading when opening another book
+    if (window.WealthTTS) window.WealthTTS.stop();
+
     state.activeBook = book;
     const overlay = $("#modal-overlay");
     const modal = $("#modal");
@@ -410,6 +707,8 @@
           Back to library
         </button>
 
+        ${ttsPlayerHtml()}
+
         <div class="essence-block">
           <div class="label">Essence · 神髄</div>
           <p>${escapeHtml(book.essence || book.short || "")}</p>
@@ -423,7 +722,12 @@
               const app = insight.application;
               return `
               <li data-index="${i}" tabindex="0">
-                <span class="para-text">${escapeHtml(insight.headline || "")}</span>
+                <div class="para-row">
+                  <span class="para-text">${escapeHtml(insight.headline || "")}</span>
+                  <button type="button" class="insight-listen-btn" data-tts-insight="${i}" title="Listen to this insight" aria-label="Listen to insight ${i + 1}">
+                    ▶︎
+                  </button>
+                </div>
                 <div class="app-expand">
                   <div class="insight-detail-block">
                     <div class="app-label">Detailed summary</div>
@@ -484,8 +788,12 @@
       });
     });
 
+    bindTtsPlayer(modal, book);
+
     $$(".meat-list li", modal).forEach((li) => {
-      const toggle = () => {
+      const toggle = (e) => {
+        // Don't toggle when using the per-insight listen control
+        if (e && e.target && e.target.closest("[data-tts-insight]")) return;
         const was = li.classList.contains("expanded");
         $$(".meat-list li", modal).forEach((x) => x.classList.remove("expanded"));
         if (!was) li.classList.add("expanded");
@@ -494,7 +802,7 @@
       li.addEventListener("keydown", (e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
-          toggle();
+          toggle(e);
         }
       });
     });
@@ -509,6 +817,12 @@
   }
 
   function closeModal() {
+    if (window.WealthTTS) window.WealthTTS.stop();
+    const modal = $("#modal");
+    if (modal && typeof modal._ttsUnsub === "function") {
+      modal._ttsUnsub();
+      modal._ttsUnsub = null;
+    }
     const overlay = $("#modal-overlay");
     if (overlay) overlay.classList.remove("open");
     document.body.style.overflow = "";
