@@ -460,7 +460,7 @@
       const status = player.querySelector("[data-tts-status]");
       if (status) {
         status.textContent =
-          "Audio reading needs a browser with speech support (Chrome, Edge, Safari, or Firefox).";
+          "Audio needs a modern browser with media playback (Chrome, Edge, Safari, or Firefox).";
       }
       return;
     }
@@ -475,7 +475,7 @@
     const statusEl = player.querySelector("[data-tts-status]");
     const progressEl = player.querySelector("[data-tts-progress]");
 
-    // Populate voices
+    // Populate ElevenLabs voices
     const fillVoices = () => {
       if (!voiceSelect) return;
       const voices = window.WealthTTS.listVoices();
@@ -486,15 +486,19 @@
           (v) =>
             `<option value="${escapeHtml(v.voiceURI)}"${
               best && v.voiceURI === best.voiceURI ? " selected" : ""
-            }>${escapeHtml(v.name)} (${escapeHtml(v.lang)})</option>`
+            }>${escapeHtml(v.name)}</option>`
         )
         .join("");
-      if (current) voiceSelect.value = current;
-      else if (best) voiceSelect.value = best.voiceURI;
+      if (current && [...voiceSelect.options].some((o) => o.value === current)) {
+        voiceSelect.value = current;
+      } else if (best) voiceSelect.value = best.voiceURI;
     };
     fillVoices();
     setTimeout(fillVoices, 400);
-    setTimeout(fillVoices, 1200);
+    setTimeout(fillVoices, 1500);
+    if (window.WealthTTS.loadRemoteVoices) {
+      window.WealthTTS.loadRemoteVoices().then(fillVoices).catch(() => {});
+    }
 
     const updateUI = (st) => {
       if (!st) st = window.WealthTTS.getStatus();
@@ -539,6 +543,10 @@
       if (event === "unsupported" && statusEl) {
         statusEl.textContent = "Speech is not available in this browser.";
       }
+      if (event === "status" && payload && payload.error && statusEl) {
+        player.dataset.userMsg = "1";
+        statusEl.textContent = payload.error;
+      }
     });
 
     // Store cleanup on modal element
@@ -546,7 +554,7 @@
 
     btnPlay?.addEventListener("click", () => {
       const mode = modeSelect?.value || "full";
-      const rate = rateRange ? Number(rateRange.value) : 0.95;
+      const rate = rateRange ? Number(rateRange.value) : 0.98;
       if (voiceSelect?.value) window.WealthTTS.setVoice(voiceSelect.value);
       window.WealthTTS.setRate(rate);
       const script = buildListenScript(book, mode);
@@ -594,7 +602,7 @@
         const ins = insights[idx];
         if (!ins) return;
         if (voiceSelect?.value) window.WealthTTS.setVoice(voiceSelect.value);
-        const rate = rateRange ? Number(rateRange.value) : 0.95;
+        const rate = rateRange ? Number(rateRange.value) : 0.98;
         window.WealthTTS.setRate(rate);
         const script = [
           {
@@ -631,7 +639,7 @@
             <span class="tts-icon" aria-hidden="true">🎧</span>
             <div>
               <strong>Listen</strong>
-              <span class="tts-sub">Natural voice reading · 音声朗読</span>
+              <span class="tts-sub">ElevenLabs · studio voice</span>
             </div>
           </div>
           <div class="tts-wave" aria-hidden="true">
@@ -651,7 +659,7 @@
           <div class="tts-progress-fill" data-tts-progress></div>
         </div>
         <p class="tts-status" data-tts-status>${
-          ok ? "Ready · tap Listen to begin" : "Loading speech engine…"
+          ok ? "Ready · ElevenLabs · tap Listen" : "Loading voice engine…"
         }</p>
 
         <div class="tts-options">
@@ -669,8 +677,8 @@
             <select data-tts-voice></select>
           </label>
           <label class="tts-field tts-field-rate">
-            <span>Speed <em data-tts-rate-label>0.95×</em></span>
-            <input type="range" data-tts-rate min="0.75" max="1.25" step="0.05" value="0.95" />
+            <span>Speed <em data-tts-rate-label>0.98×</em></span>
+            <input type="range" data-tts-rate min="0.75" max="1.25" step="0.05" value="0.98" />
           </label>
         </div>
       </div>
