@@ -350,6 +350,39 @@
     updateBackBar();
   }
 
+  /** Top-10 insights with detailed summary + per-insight application */
+  function getInsights(book) {
+    const pack =
+      (window.WEALTH_BOOK_INSIGHTS && window.WEALTH_BOOK_INSIGHTS[book.id]) ||
+      null;
+    if (pack && pack.length) return pack;
+
+    const paragraphs = book.paragraphs || [];
+    const apps = book.applications || [];
+    return paragraphs.map((p, i) => ({
+      headline: p,
+      detail: p,
+      application: apps[i % Math.max(apps.length, 1)] || null,
+    }));
+  }
+
+  function getApplications(book, insights) {
+    const pack =
+      (window.WEALTH_BOOK_APPLICATIONS &&
+        window.WEALTH_BOOK_APPLICATIONS[book.id]) ||
+      null;
+    if (pack && pack.length) return pack;
+    if (book.applications && book.applications.length) return book.applications;
+    return insights
+      .map((x) => x.application)
+      .filter(Boolean)
+      .slice(0, 5);
+  }
+
+  function formatAppBody(text) {
+    return escapeHtml(text || "").replace(/\n\n/g, "</p><p>").replace(/\n/g, "<br/>");
+  }
+
   function openModal(book) {
     state.activeBook = book;
     const overlay = $("#modal-overlay");
@@ -357,14 +390,9 @@
     if (!overlay || !modal) return;
 
     const img = book.image || "";
-    const paragraphs = book.paragraphs || [];
-    const applications = book.applications || [];
+    const insights = getInsights(book);
+    const applications = getApplications(book, insights);
     const shelf = resolveShelf(book);
-
-    const appForPara = (i) => {
-      if (!applications.length) return null;
-      return applications[i % applications.length];
-    };
 
     modal.innerHTML = `
       <div class="modal-hero">
@@ -388,23 +416,29 @@
         </div>
 
         <h3 class="section-title"><span class="jp-mark">要</span> The Meat — Top 10 Insights</h3>
-        <p class="expand-hint">Click any insight to expand a real-world application for today’s lifestyle.</p>
+        <p class="expand-hint">Click any insight for a detailed summary and a specific real-world application.</p>
         <ol class="meat-list">
-          ${paragraphs
-            .map((p, i) => {
-              const app = appForPara(i);
+          ${insights
+            .map((insight, i) => {
+              const app = insight.application;
               return `
               <li data-index="${i}" tabindex="0">
-                <span class="para-text">${escapeHtml(p)}</span>
-                ${
-                  app
-                    ? `<div class="app-expand">
-                        <div class="app-label">Real-world application</div>
-                        <div class="app-title">${escapeHtml(app.title)}</div>
-                        <div class="app-body">${escapeHtml(app.body)}</div>
-                      </div>`
-                    : ""
-                }
+                <span class="para-text">${escapeHtml(insight.headline || "")}</span>
+                <div class="app-expand">
+                  <div class="insight-detail-block">
+                    <div class="app-label">Detailed summary</div>
+                    <p class="insight-detail">${escapeHtml(insight.detail || insight.headline || "")}</p>
+                  </div>
+                  ${
+                    app
+                      ? `<div class="insight-app-block">
+                          <div class="app-label">Real-world application</div>
+                          <div class="app-title">${escapeHtml(app.title || "")}</div>
+                          <div class="app-body"><p>${formatAppBody(app.body)}</p></div>
+                        </div>`
+                      : ""
+                  }
+                </div>
               </li>`;
             })
             .join("")}
@@ -412,6 +446,7 @@
 
         <div class="applications-section">
           <h3 class="section-title"><span class="jp-mark">実</span> Lifestyle Applications</h3>
+          <p class="expand-hint" style="margin-top:-0.35rem">Key practices distilled from this book—expand for the full playbook.</p>
           <div class="app-cards">
             ${applications
               .map(
@@ -422,7 +457,7 @@
                   <span class="chevron">▼</span>
                 </button>
                 <div class="app-card-body">
-                  <div class="app-card-body-inner">${escapeHtml(a.body)}</div>
+                  <div class="app-card-body-inner"><p>${formatAppBody(a.body)}</p></div>
                 </div>
               </div>`
               )

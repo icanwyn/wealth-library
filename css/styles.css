@@ -950,21 +950,28 @@ body::before {
 .meat-list li.expanded {
   background: rgba(247, 243, 235, 1);
   box-shadow: 0 2px 12px var(--shadow);
-  padding-bottom: 1.1rem;
-  margin-bottom: 0.5rem;
+  padding-bottom: 1.15rem;
+  margin-bottom: 0.65rem;
 }
 
 .meat-list .para-text {
   display: block;
+  font-weight: 500;
+  color: var(--sumi);
+}
+
+.meat-list li:not(.expanded) .para-text::after {
+  content: " · expand";
+  font-weight: 400;
+  font-size: 0.72rem;
+  color: var(--gold);
+  letter-spacing: 0.04em;
+  opacity: 0.85;
 }
 
 .meat-list .app-expand {
   display: none;
-  margin-top: 0.85rem;
-  padding: 0.9rem 1rem;
-  background: linear-gradient(135deg, rgba(92, 122, 94, 0.1), rgba(196, 163, 90, 0.08));
-  border-radius: 4px;
-  border: 1px solid rgba(92, 122, 94, 0.2);
+  margin-top: 0.95rem;
   animation: expandIn 0.35s var(--ease-out);
 }
 
@@ -983,35 +990,90 @@ body::before {
   }
 }
 
+.insight-detail-block {
+  padding: 1rem 1.1rem;
+  margin-bottom: 0.65rem;
+  background: linear-gradient(135deg, rgba(196, 163, 90, 0.12), rgba(247, 243, 235, 0.9));
+  border-radius: 4px;
+  border: 1px solid rgba(196, 163, 90, 0.28);
+  border-left: 3px solid var(--gold);
+}
+
+.insight-app-block {
+  padding: 1rem 1.1rem;
+  background: linear-gradient(135deg, rgba(194, 59, 34, 0.08), rgba(92, 122, 94, 0.1));
+  border-radius: 4px;
+  border: 1px solid rgba(194, 59, 34, 0.22);
+  border-left: 3px solid var(--vermillion);
+}
+
 .app-expand .app-label {
   font-size: 0.65rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--bamboo-deep);
   font-weight: 600;
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.45rem;
   display: flex;
   align-items: center;
   gap: 0.4rem;
 }
 
-.app-expand .app-label::before {
+.insight-detail-block .app-label {
+  color: #8a7340;
+}
+
+.insight-detail-block .app-label::before {
+  content: "詳";
+  font-family: var(--font-serif);
+  color: var(--gold);
+}
+
+.insight-app-block .app-label {
+  color: var(--vermillion);
+}
+
+.insight-app-block .app-label::before {
   content: "実";
   font-family: var(--font-serif);
   color: var(--vermillion);
 }
 
+.app-expand .insight-detail {
+  font-size: 0.9rem;
+  color: var(--sumi-soft);
+  line-height: 1.7;
+  margin: 0;
+}
+
 .app-expand .app-title {
   font-family: var(--font-serif);
-  font-size: 0.95rem;
+  font-size: 1.02rem;
   color: var(--sumi);
-  margin-bottom: 0.3rem;
+  margin-bottom: 0.45rem;
+  font-weight: 500;
 }
 
 .app-expand .app-body {
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   color: var(--ink-muted);
-  line-height: 1.6;
+  line-height: 1.7;
+}
+
+.app-expand .app-body p {
+  margin: 0 0 0.65rem;
+}
+
+.app-expand .app-body p:last-child {
+  margin-bottom: 0;
+}
+
+.app-card-body-inner p {
+  margin: 0 0 0.65rem;
+}
+
+.app-card-body-inner p:last-child {
+  margin-bottom: 0;
 }
 
 .expand-hint {
