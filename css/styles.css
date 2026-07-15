@@ -230,10 +230,19 @@ body::before {
 }
 
 .shelf-row {
+  position: relative;
+  z-index: 1;
   margin-bottom: 2.5rem;
   opacity: 0;
   transform: translateY(24px);
   animation: shelfIn 0.7s var(--ease-out) forwards;
+  /* Allow tooltips to paint above neighboring shelves */
+  overflow: visible;
+}
+
+.shelf-row:hover,
+.shelf-row:focus-within {
+  z-index: 50;
 }
 
 .shelf-row:nth-child(1) { animation-delay: 0.05s; }
@@ -254,11 +263,13 @@ body::before {
   font-size: 0.8rem;
   letter-spacing: 0.15em;
   color: var(--gold);
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
   padding-left: 0.25rem;
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  position: relative;
+  z-index: 0;
 }
 
 .shelf-label::after {
@@ -269,13 +280,19 @@ body::before {
   opacity: 0.4;
 }
 
+/*
+  Note: overflow-x: auto forces overflow-y to compute as auto (not visible),
+  which clips hover tooltips. We keep horizontal scroll but reserve top padding
+  so tooltips sit inside the scrollport instead of above it.
+*/
 .shelf {
   position: relative;
   display: flex;
   align-items: flex-end;
   gap: 6px;
-  padding: 1.5rem 1.25rem 0;
-  min-height: 200px;
+  /* Room for tooltip (~120px) + hover lift + arrow */
+  padding: 9.5rem 1.25rem 0;
+  min-height: calc(200px + 8rem);
   background: linear-gradient(
     180deg,
     rgba(61, 50, 41, 0.06) 0%,
@@ -284,7 +301,7 @@ body::before {
   );
   border-radius: 4px 4px 0 0;
   overflow-x: auto;
-  overflow-y: visible;
+  overflow-y: hidden;
   scrollbar-width: thin;
   scrollbar-color: var(--wood-light) transparent;
   perspective: 900px;
@@ -327,13 +344,16 @@ body::before {
   width: 48px;
   height: 160px;
   cursor: pointer;
-  transform-style: preserve-3d;
-  transform-origin: bottom center;
-  transition:
-    transform 0.45s var(--ease-out),
-    box-shadow 0.45s var(--ease-out),
-    filter 0.3s;
+  /* Tooltip stays upright — 3D tilt applied to spine only */
+  transform-style: flat;
+  transition: filter 0.3s;
   z-index: 2;
+  overflow: visible;
+  border: none;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  color: inherit;
 }
 
 .book:nth-child(odd) {
@@ -365,6 +385,11 @@ body::before {
   justify-content: space-between;
   padding: 12px 4px 10px;
   overflow: hidden;
+  transform-origin: bottom center;
+  transform-style: preserve-3d;
+  transition:
+    transform 0.45s var(--ease-out),
+    box-shadow 0.45s var(--ease-out);
 }
 
 .book-spine::before {
@@ -426,17 +451,17 @@ body::before {
   z-index: 1;
 }
 
-/* Hover: tilt back + tooltip */
+/* Hover: tilt spine back; tooltip stays flat and fully visible */
 .book:hover,
 .book:focus-visible {
-  transform: translateY(-18px) rotateX(-12deg) scale(1.05);
-  z-index: 10;
+  z-index: 30;
   filter: brightness(1.08);
   outline: none;
 }
 
 .book:hover .book-spine,
 .book:focus-visible .book-spine {
+  transform: translateY(-18px) rotateX(-12deg) scale(1.05);
   box-shadow:
     inset -3px 0 8px rgba(0, 0, 0, 0.25),
     0 16px 32px var(--shadow-deep),
@@ -445,21 +470,30 @@ body::before {
 
 .book-tooltip {
   position: absolute;
-  bottom: calc(100% + 14px);
+  bottom: calc(100% + 12px);
   left: 50%;
-  transform: translateX(-50%) translateY(8px);
-  width: 220px;
+  transform: translateX(-50%) translateY(6px);
+  width: max(220px, max-content);
+  max-width: min(260px, 70vw);
   padding: 0.9rem 1rem;
   background: var(--sumi);
   color: var(--washi);
   border-radius: 4px;
   font-size: 0.78rem;
   line-height: 1.5;
+  text-align: left;
+  white-space: normal;
   opacity: 0;
+  visibility: hidden;
   pointer-events: none;
-  transition: opacity 0.3s, transform 0.3s var(--ease-out);
+  transition:
+    opacity 0.3s var(--ease-out),
+    transform 0.3s var(--ease-out),
+    visibility 0.3s;
   box-shadow: 0 12px 40px var(--shadow-deep);
-  z-index: 20;
+  z-index: 40;
+  /* Avoid subpixel blur from parent filters on some browsers */
+  -webkit-font-smoothing: antialiased;
 }
 
 .book-tooltip::after {
@@ -477,6 +511,7 @@ body::before {
   font-size: 0.88rem;
   color: var(--gold-soft);
   margin-bottom: 0.2rem;
+  font-weight: 500;
 }
 
 .book-tooltip .tt-author {
@@ -485,10 +520,56 @@ body::before {
   margin-bottom: 0.45rem;
 }
 
+.book-tooltip .tt-desc {
+  color: rgba(247, 243, 235, 0.88);
+}
+
 .book:hover .book-tooltip,
 .book:focus-visible .book-tooltip {
   opacity: 1;
+  visibility: visible;
   transform: translateX(-50%) translateY(0);
+}
+
+/* Keep edge tooltips inside the shelf viewport when possible */
+.book:first-child .book-tooltip,
+.book:nth-child(2) .book-tooltip {
+  left: 0;
+  transform: translateX(0) translateY(6px);
+}
+
+.book:first-child .book-tooltip::after,
+.book:nth-child(2) .book-tooltip::after {
+  left: 1.25rem;
+  transform: none;
+}
+
+.book:first-child:hover .book-tooltip,
+.book:first-child:focus-visible .book-tooltip,
+.book:nth-child(2):hover .book-tooltip,
+.book:nth-child(2):focus-visible .book-tooltip {
+  transform: translateX(0) translateY(0);
+}
+
+.book:last-child .book-tooltip,
+.book:nth-last-child(2) .book-tooltip {
+  left: auto;
+  right: 0;
+  transform: translateX(0) translateY(6px);
+}
+
+.book:last-child .book-tooltip::after,
+.book:nth-last-child(2) .book-tooltip::after {
+  left: auto;
+  right: 1.25rem;
+  transform: none;
+}
+
+.book:last-child:hover .book-tooltip,
+.book:last-child:focus-visible .book-tooltip,
+.book:nth-last-child(2):hover .book-tooltip,
+.book:nth-last-child(2):focus-visible .book-tooltip {
+  transform: translateX(0) translateY(0);
 }
 
 /* ─── Modal ─── */
