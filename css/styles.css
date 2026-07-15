@@ -123,6 +123,40 @@ body::before {
   color: var(--vermillion);
 }
 
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.nav-home-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  padding: 0.4rem 0.9rem;
+  border: 1px solid rgba(90, 85, 76, 0.25);
+  background: var(--cream);
+  color: var(--sumi);
+  border-radius: 100px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+  white-space: nowrap;
+}
+
+.nav-home-btn:hover {
+  border-color: var(--vermillion);
+  color: var(--vermillion);
+  background: rgba(194, 59, 34, 0.06);
+}
+
+.nav-home-icon {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
 .nav-search {
   position: relative;
 }
@@ -191,6 +225,52 @@ body::before {
 .library-header p {
   color: var(--ink-muted);
   font-size: 0.95rem;
+}
+
+/* Back bar when a single shelf or search is active */
+.library-back-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  margin: 0 auto 1.25rem;
+  padding: 0.65rem 1.25rem;
+  max-width: 720px;
+  background: rgba(26, 26, 26, 0.04);
+  border: 1px solid rgba(196, 163, 90, 0.25);
+  border-radius: 100px;
+}
+
+.library-back-bar[hidden] {
+  display: none !important;
+}
+
+.back-to-library {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  padding: 0.35rem 0.9rem;
+  border: none;
+  background: var(--sumi);
+  color: var(--washi);
+  border-radius: 100px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.back-to-library:hover {
+  background: var(--vermillion);
+  transform: translateX(-2px);
+}
+
+.back-bar-context {
+  font-family: var(--font-serif);
+  font-size: 0.9rem;
+  color: var(--ink-muted);
 }
 
 .filters {
@@ -273,10 +353,25 @@ body::before {
   flex-wrap: wrap;
 }
 
+.shelf-label .shelf-num {
+  font-family: var(--font-serif);
+  font-size: 0.75rem;
+  color: var(--vermillion);
+  letter-spacing: 0.08em;
+  min-width: 1.5rem;
+}
+
 .shelf-label .shelf-cat {
   color: var(--sumi);
   font-weight: 500;
   letter-spacing: 0.1em;
+}
+
+.shelf-label .shelf-jp {
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+  letter-spacing: 0.12em;
+  font-weight: 400;
 }
 
 .shelf-label .shelf-meta {
@@ -285,6 +380,13 @@ body::before {
   letter-spacing: 0.06em;
   color: var(--gold);
   white-space: nowrap;
+}
+
+.shelf-blurb {
+  font-size: 0.82rem;
+  color: var(--ink-muted);
+  margin: -0.15rem 0 0.65rem 0.25rem;
+  letter-spacing: 0.02em;
 }
 
 .shelf-label::after {
@@ -714,6 +816,49 @@ body::before {
   flex: 1;
 }
 
+.modal-back-library {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  letter-spacing: 0.05em;
+  padding: 0.5rem 1rem;
+  margin-bottom: 1.25rem;
+  border: 1px solid rgba(90, 85, 76, 0.2);
+  background: transparent;
+  color: var(--sumi);
+  border-radius: 100px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.modal-back-library:hover {
+  border-color: var(--vermillion);
+  color: var(--vermillion);
+  background: rgba(194, 59, 34, 0.05);
+}
+
+.modal-back-library--bottom {
+  margin: 2rem 0 0;
+  width: 100%;
+  justify-content: center;
+  background: var(--sumi);
+  color: var(--washi);
+  border-color: var(--sumi);
+}
+
+.modal-back-library--bottom:hover {
+  background: var(--vermillion);
+  border-color: var(--vermillion);
+  color: var(--washi);
+}
+
+.modal-back-arrow {
+  font-size: 1rem;
+  line-height: 1;
+}
+
 .essence-block {
   background: linear-gradient(135deg, rgba(196, 163, 90, 0.1), rgba(194, 59, 34, 0.06));
   border-left: 3px solid var(--vermillion);
@@ -989,12 +1134,25 @@ body::before {
     display: none;
   }
 
+  .nav-home-btn span:last-child {
+    display: none;
+  }
+
+  .nav-home-btn {
+    padding: 0.4rem 0.65rem;
+  }
+
   .nav-search input {
     width: 140px;
   }
 
   .nav-search input:focus {
     width: 180px;
+  }
+
+  .library-back-bar {
+    border-radius: 12px;
+    max-width: calc(100% - 2rem);
   }
 
   .book {

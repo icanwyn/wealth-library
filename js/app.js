@@ -1,58 +1,118 @@
 /**
  * Wealth 財 — Digital Library Application
- * Category shelves, hover tooltips, modal with meat paragraphs & applications
+ * 10 condensed shelves, hover tooltips, modal with applications
  */
 (function () {
   "use strict";
 
-  /** Preferred library aisle order (unknown categories sort alphabetically after) */
-  const CATEGORY_ORDER = [
-    "Value Investing",
-    "Growth Investing",
-    "Stock Picking",
-    "Indexing",
-    "Markets",
-    "Allocation",
-    "Risk",
-    "Uncertainty",
-    "Trading",
-    "Analysis",
-    "Quant",
-    "Special Situations",
-    "Research",
-    "Behavior",
-    "Psychology",
-    "Mental Models",
-    "Decision Making",
-    "Personal Finance",
-    "Foundations",
-    "Mindset",
-    "Lifestyle",
-    "Wealth Habits",
-    "Debt",
-    "Habits",
-    "Business",
-    "Institutional",
-    "Theory",
-    "History",
-    "Biography",
-    "Crisis",
-    "Scandal",
-    "Wall Street",
-    "Deals",
-    "Macro",
-    "Economics",
-    "Inequality",
-    "Inflation",
-    "Money",
-    "Banking",
-    "Crypto",
-    "Ethics",
-    "Strategy",
+  /**
+   * Exactly 10 library shelves. Each maps original book.category values.
+   * Order here = display order on the page.
+   */
+  const SHELVES = [
+    {
+      id: "value",
+      name: "Value Investing",
+      jp: "価値投資",
+      blurb: "Graham, Buffett, and the margin of safety",
+      categories: [
+        "Value Investing",
+        "Growth Investing",
+        "Special Situations",
+        "Research",
+        "Quant",
+      ],
+    },
+    {
+      id: "picking",
+      name: "Stock Picking",
+      jp: "銘柄選択",
+      blurb: "Lynch, Fisher, and finding winners early",
+      categories: ["Stock Picking", "Growth Investing"],
+    },
+    {
+      id: "index",
+      name: "Indexing & Allocation",
+      jp: "分散と配分",
+      blurb: "Bogle, Bernstein, Swensen — own the haystack",
+      categories: ["Indexing", "Allocation", "Institutional", "Theory"],
+    },
+    {
+      id: "markets",
+      name: "Markets & Analysis",
+      jp: "市場と分析",
+      blurb: "How markets move, charts, and market structure",
+      categories: ["Markets", "Analysis", "Wall Street"],
+    },
+    {
+      id: "risk",
+      name: "Risk & Uncertainty",
+      jp: "リスクと不確実性",
+      blurb: "Taleb, Marks, and living with the unknown",
+      categories: ["Risk", "Uncertainty", "Ethics", "Strategy"],
+    },
+    {
+      id: "trading",
+      name: "Trading Psychology",
+      jp: "売買の心理",
+      blurb: "Wizards, the zone, and process over prediction",
+      categories: ["Trading", "Psychology"],
+    },
+    {
+      id: "behavior",
+      name: "Behavioral Finance",
+      jp: "行動ファイナンス",
+      blurb: "Kahneman, Thaler, Housel — the mind and money",
+      categories: ["Behavior", "Mental Models", "Decision Making"],
+    },
+    {
+      id: "personal",
+      name: "Personal Finance",
+      jp: "個人の家計",
+      blurb: "Habits, debt, FI, and building a rich life",
+      categories: [
+        "Personal Finance",
+        "Foundations",
+        "Mindset",
+        "Lifestyle",
+        "Wealth Habits",
+        "Debt",
+        "Habits",
+      ],
+    },
+    {
+      id: "business",
+      name: "Business & Venture",
+      jp: "事業と起業",
+      blurb: "Building companies, deals, and hard things",
+      categories: ["Business", "Deals"],
+    },
+    {
+      id: "history",
+      name: "History, Crisis & Money",
+      jp: "歴史・危機・貨幣",
+      blurb: "Crashes, inequality, crypto, and the long story of capital",
+      categories: [
+        "History",
+        "Biography",
+        "Crisis",
+        "Scandal",
+        "Macro",
+        "Economics",
+        "Inequality",
+        "Inflation",
+        "Money",
+        "Banking",
+        "Crypto",
+      ],
+    },
   ];
 
+  // Growth Investing is listed under both value and picking — assign once via first match
+  // We'll use first-shelf-wins in resolveShelfId
+
   const state = {
-    filter: "All",
+    filter: "All", // "All" | shelf id
     query: "",
     activeBook: null,
   };
@@ -64,25 +124,27 @@
     return window.WEALTH_BOOKS || [];
   }
 
-  function categoryRank(cat) {
-    const i = CATEGORY_ORDER.indexOf(cat);
-    return i === -1 ? 1000 : i;
+  /** First matching shelf wins (stable 10-aisle map) */
+  function resolveShelf(book) {
+    const cat = book.category || "";
+    for (let i = 0; i < SHELVES.length; i++) {
+      if (SHELVES[i].categories.includes(cat)) return SHELVES[i];
+    }
+    // Fallback: last shelf (history/misc) so nothing is orphaned
+    return SHELVES[SHELVES.length - 1];
   }
 
-  function uniqueCategories(books) {
-    const set = new Set(books.map((b) => b.category).filter(Boolean));
-    const sorted = [...set].sort((a, b) => {
-      const d = categoryRank(a) - categoryRank(b);
-      return d !== 0 ? d : a.localeCompare(b);
-    });
-    return ["All", ...sorted];
+  function shelfById(id) {
+    return SHELVES.find((s) => s.id === id) || null;
   }
 
   function filterBooks(books) {
-    let list = books;
+    let list = books.map((b) => ({ ...b, shelf: resolveShelf(b) }));
+
     if (state.filter !== "All") {
-      list = list.filter((b) => b.category === state.filter);
+      list = list.filter((b) => b.shelf.id === state.filter);
     }
+
     if (state.query.trim()) {
       const q = state.query.trim().toLowerCase();
       list = list.filter(
@@ -90,39 +152,34 @@
           b.title.toLowerCase().includes(q) ||
           b.author.toLowerCase().includes(q) ||
           b.category.toLowerCase().includes(q) ||
+          b.shelf.name.toLowerCase().includes(q) ||
           (b.short && b.short.toLowerCase().includes(q))
       );
     }
     return list;
   }
 
-  /** Group filtered books into category shelves (sorted by library order) */
-  function groupByCategory(books) {
-    const map = new Map();
+  /** Always produce up to 10 shelves (skip empty after filter/search) */
+  function groupIntoTenShelves(books) {
+    const buckets = new Map(SHELVES.map((s) => [s.id, []]));
+
     books.forEach((book) => {
-      const cat = book.category || "General";
-      if (!map.has(cat)) map.set(cat, []);
-      map.get(cat).push(book);
+      const shelf = book.shelf || resolveShelf(book);
+      if (!buckets.has(shelf.id)) buckets.set(shelf.id, []);
+      buckets.get(shelf.id).push(book);
     });
 
-    return [...map.entries()]
-      .sort((a, b) => {
-        const d = categoryRank(a[0]) - categoryRank(b[0]);
-        return d !== 0 ? d : a[0].localeCompare(b[0]);
-      })
-      .map(([category, items]) => ({
-        category,
-        books: items.slice().sort((a, b) => {
-          const y = (a.year || 0) - (b.year || 0);
-          return y !== 0 ? y : a.title.localeCompare(b.title);
-        }),
-      }));
+    return SHELVES.map((meta) => {
+      const items = (buckets.get(meta.id) || []).slice().sort((a, b) => {
+        const y = (a.year || 0) - (b.year || 0);
+        return y !== 0 ? y : a.title.localeCompare(b.title);
+      });
+      return { ...meta, books: items };
+    }).filter((s) => s.books.length > 0);
   }
 
-  /** Spine height/width so the full title fits vertically */
   function spineMetrics(title) {
     const len = (title || "").length;
-    // Vertical text: ~px per character at base spine font
     let fontRem = 0.72;
     let pxPerChar = 9.4;
     if (len > 38) {
@@ -136,24 +193,60 @@
       pxPerChar = 8.9;
     }
 
-    const chrome = 78; // padding + band + year
+    const chrome = 78;
     const height = Math.round(
       Math.min(460, Math.max(260, chrome + len * pxPerChar + 12))
     );
-    // Wider spines read better for vertical titles
     const width = len > 32 ? 72 : len > 20 ? 66 : 60;
     return { height, width, fontRem };
   }
 
-  function renderFilters(categories) {
+  function goHomeLibrary() {
+    state.filter = "All";
+    state.query = "";
+    const search = $("#search-input");
+    if (search) search.value = "";
+    closeModal();
+    renderFilters();
+    renderShelves();
+    updateBackBar();
+    const lib = $("#library");
+    if (lib) lib.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function updateBackBar() {
+    const bar = $("#library-back-bar");
+    if (!bar) return;
+    const focused = state.filter !== "All" || state.query.trim();
+    bar.hidden = !focused;
+    if (!focused) return;
+
+    const shelf = shelfById(state.filter);
+    const label = state.query.trim()
+      ? `Search: “${state.query.trim()}”`
+      : shelf
+        ? shelf.name
+        : "Filtered view";
+
+    const title = bar.querySelector(".back-bar-context");
+    if (title) title.textContent = label;
+  }
+
+  function renderFilters() {
     const el = $("#filters");
     if (!el) return;
-    el.innerHTML = categories
+
+    const chips = [
+      { id: "All", label: "All shelves" },
+      ...SHELVES.map((s) => ({ id: s.id, label: s.name })),
+    ];
+
+    el.innerHTML = chips
       .map(
         (c) =>
           `<button type="button" class="filter-btn${
-            c === state.filter ? " active" : ""
-          }" data-filter="${c}">${c}</button>`
+            c.id === state.filter ? " active" : ""
+          }" data-filter="${c.id}">${escapeHtml(c.label)}</button>`
       )
       .join("");
   }
@@ -205,40 +298,44 @@
     if (!books.length) {
       container.innerHTML =
         '<p class="no-results">何も見つかりません — No books match your search.</p>';
-      $("#book-count") &&
-        ($("#book-count").textContent = "0 volumes");
+      if ($("#book-count")) $("#book-count").textContent = "0 volumes";
+      updateBackBar();
       return;
     }
 
-    const shelves = groupByCategory(books);
-    const catCount = shelves.length;
+    const shelves = groupIntoTenShelves(books);
+    const nShelves = shelves.length;
 
-    $("#book-count") &&
-      ($("#book-count").textContent =
-        catCount === 1
-          ? `${books.length} volumes · ${shelves[0].category}`
-          : `${books.length} volumes · ${catCount} shelves`);
+    if ($("#book-count")) {
+      $("#book-count").textContent =
+        nShelves === 1
+          ? `${books.length} volumes · ${shelves[0].name}`
+          : `${books.length} volumes · ${nShelves} shelves`;
+    }
 
     container.innerHTML = "";
 
     shelves.forEach((shelf, i) => {
       const row = document.createElement("div");
       row.className = "shelf-row";
-      row.dataset.category = shelf.category;
+      row.id = `shelf-${shelf.id}`;
+      row.dataset.shelf = shelf.id;
       const n = shelf.books.length;
       const volLabel = n === 1 ? "1 volume" : `${n} volumes`;
 
       row.innerHTML = `
         <div class="shelf-label">
-          <span class="shelf-cat">${escapeHtml(shelf.category)}</span>
+          <span class="shelf-num">${String(i + 1).padStart(2, "0")}</span>
+          <span class="shelf-cat">${escapeHtml(shelf.name)}</span>
+          <span class="shelf-jp">${escapeHtml(shelf.jp || "")}</span>
           <span class="shelf-meta">${volLabel}</span>
         </div>
-        <div class="shelf" role="list" aria-label="${escapeHtml(shelf.category)}"></div>
+        <p class="shelf-blurb">${escapeHtml(shelf.blurb || "")}</p>
+        <div class="shelf" role="list" aria-label="${escapeHtml(shelf.name)}"></div>
         <div class="shelf-plank" aria-hidden="true"></div>
       `;
 
-      // Stagger entrance slightly by aisle index
-      row.style.animationDelay = `${Math.min(i * 0.05, 0.45)}s`;
+      row.style.animationDelay = `${Math.min(i * 0.06, 0.5)}s`;
 
       const shelfEl = row.querySelector(".shelf");
       shelf.books.forEach((book) => {
@@ -248,6 +345,8 @@
       });
       container.appendChild(row);
     });
+
+    updateBackBar();
   }
 
   function openModal(book) {
@@ -259,8 +358,8 @@
     const img = book.image || "";
     const paragraphs = book.paragraphs || [];
     const applications = book.applications || [];
+    const shelf = resolveShelf(book);
 
-    // Map each paragraph to a rotating application for expand
     const appForPara = (i) => {
       if (!applications.length) return null;
       return applications[i % applications.length];
@@ -269,14 +368,19 @@
     modal.innerHTML = `
       <div class="modal-hero">
         <img src="${escapeHtml(img)}" alt="" loading="lazy" onerror="this.style.background='#2a2a2a'" />
-        <button type="button" class="modal-close" aria-label="Close">×</button>
+        <button type="button" class="modal-close" aria-label="Back to library">×</button>
         <div class="modal-hero-content">
-          <span class="category-tag">${escapeHtml(book.category || "Finance")}</span>
+          <span class="category-tag">${escapeHtml(shelf.name)} · ${escapeHtml(book.category || "")}</span>
           <h2>${escapeHtml(book.title)}</h2>
           <p class="meta">${escapeHtml(book.author)} · ${book.year || ""}</p>
         </div>
       </div>
       <div class="modal-body">
+        <button type="button" class="modal-back-library">
+          <span class="modal-back-arrow" aria-hidden="true">←</span>
+          Back to library
+        </button>
+
         <div class="essence-block">
           <div class="label">Essence · 神髄</div>
           <p>${escapeHtml(book.essence || book.short || "")}</p>
@@ -324,6 +428,11 @@
               .join("")}
           </div>
         </div>
+
+        <button type="button" class="modal-back-library modal-back-library--bottom">
+          <span class="modal-back-arrow" aria-hidden="true">←</span>
+          Back to library
+        </button>
       </div>
     `;
 
@@ -331,8 +440,14 @@
     document.body.style.overflow = "hidden";
 
     modal.querySelector(".modal-close").addEventListener("click", closeModal);
+    $$(".modal-back-library", modal).forEach((btn) => {
+      btn.addEventListener("click", () => {
+        closeModal();
+        const lib = $("#library");
+        if (lib) lib.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    });
 
-    // Expand paragraphs on click
     $$(".meat-list li", modal).forEach((li) => {
       const toggle = () => {
         const was = li.classList.contains("expanded");
@@ -348,7 +463,6 @@
       });
     });
 
-    // App cards accordion
     $$(".app-card", modal).forEach((card) => {
       card.querySelector(".app-card-header").addEventListener("click", () => {
         const open = card.classList.contains("open");
@@ -383,10 +497,9 @@
         const btn = e.target.closest("[data-filter]");
         if (!btn) return;
         state.filter = btn.dataset.filter;
-        $$(".filter-btn", filters).forEach((b) =>
-          b.classList.toggle("active", b.dataset.filter === state.filter)
-        );
+        renderFilters();
         renderShelves();
+        updateBackBar();
       });
     }
 
@@ -398,9 +511,19 @@
         t = setTimeout(() => {
           state.query = search.value;
           renderShelves();
+          updateBackBar();
         }, 180);
       });
     }
+
+    // Nav + floating back controls
+    document.addEventListener("click", (e) => {
+      const home = e.target.closest("[data-action='home-library']");
+      if (home) {
+        e.preventDefault();
+        goHomeLibrary();
+      }
+    });
 
     const nav = $(".site-nav");
     if (nav) {
@@ -419,7 +542,7 @@
     if (!books.length) {
       console.warn("WEALTH_BOOKS empty — check books.js load order");
     }
-    renderFilters(uniqueCategories(books));
+    renderFilters();
     renderShelves();
     bindGlobal();
   }
