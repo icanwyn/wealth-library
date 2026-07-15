@@ -715,7 +715,7 @@
         </div>
 
         <h3 class="section-title"><span class="jp-mark">要</span> The Meat — Top 10 Insights</h3>
-        <p class="expand-hint">Click any insight for a clear explanation and a simple way to use it.</p>
+        <p class="expand-hint">Click an insight to read what the book actually teaches—and how to use it.</p>
         <ol class="meat-list">
           ${insights
             .map((insight, i) => {
@@ -730,7 +730,7 @@
                 </div>
                 <div class="app-expand">
                   <div class="insight-detail-block">
-                    <div class="app-label">What this means</div>
+                    <div class="app-label">Key point from the book</div>
                     <div class="insight-detail"><p>${escapeHtml(insight.detail || insight.headline || "")}</p></div>
                   </div>
                   ${
