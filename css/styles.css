@@ -260,9 +260,9 @@ body::before {
 
 .shelf-label {
   font-family: var(--font-serif);
-  font-size: 0.8rem;
-  letter-spacing: 0.15em;
-  color: var(--gold);
+  font-size: 0.95rem;
+  letter-spacing: 0.08em;
+  color: var(--sumi);
   margin-bottom: 0.5rem;
   padding-left: 0.25rem;
   display: flex;
@@ -270,14 +270,30 @@ body::before {
   gap: 0.75rem;
   position: relative;
   z-index: 0;
+  flex-wrap: wrap;
+}
+
+.shelf-label .shelf-cat {
+  color: var(--sumi);
+  font-weight: 500;
+  letter-spacing: 0.1em;
+}
+
+.shelf-label .shelf-meta {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--gold);
+  white-space: nowrap;
 }
 
 .shelf-label::after {
   content: "";
   flex: 1;
+  min-width: 2rem;
   height: 1px;
   background: linear-gradient(90deg, var(--gold), transparent);
-  opacity: 0.4;
+  opacity: 0.45;
 }
 
 /*
@@ -289,10 +305,10 @@ body::before {
   position: relative;
   display: flex;
   align-items: flex-end;
-  gap: 6px;
-  /* Room for tooltip (~120px) + hover lift + arrow */
+  gap: 8px;
+  /* Room for tooltip (~120px) + hover lift + taller books */
   padding: 9.5rem 1.25rem 0;
-  min-height: calc(200px + 8rem);
+  min-height: calc(280px + 9.5rem);
   background: linear-gradient(
     180deg,
     rgba(61, 50, 41, 0.06) 0%,
@@ -304,7 +320,7 @@ body::before {
   overflow-y: hidden;
   scrollbar-width: thin;
   scrollbar-color: var(--wood-light) transparent;
-  perspective: 900px;
+  perspective: 1000px;
 }
 
 .shelf-plank {
@@ -341,8 +357,8 @@ body::before {
 .book {
   position: relative;
   flex: 0 0 auto;
-  width: 48px;
-  height: 160px;
+  width: var(--book-w, 62px);
+  height: var(--book-h, 300px);
   cursor: pointer;
   /* Tooltip stays upright — 3D tilt applied to spine only */
   transform-style: flat;
@@ -356,24 +372,10 @@ body::before {
   color: inherit;
 }
 
-.book:nth-child(odd) {
-  height: 168px;
-}
-
-.book:nth-child(3n) {
-  height: 152px;
-  width: 52px;
-}
-
-.book:nth-child(5n) {
-  width: 44px;
-  height: 175px;
-}
-
 .book-spine {
   position: absolute;
   inset: 0;
-  border-radius: 2px 3px 2px 2px;
+  border-radius: 2px 4px 2px 2px;
   background: var(--spine, #2c3e50);
   box-shadow:
     inset -3px 0 8px rgba(0, 0, 0, 0.25),
@@ -382,8 +384,8 @@ body::before {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  padding: 12px 4px 10px;
+  justify-content: flex-start;
+  padding: 16px 6px 14px;
   overflow: hidden;
   transform-origin: bottom center;
   transform-style: preserve-3d;
@@ -411,43 +413,55 @@ body::before {
 .book-spine::after {
   content: "";
   position: absolute;
-  top: 20%;
-  left: 0;
-  right: 0;
+  top: 12px;
+  left: 18%;
+  right: 18%;
   height: 1px;
   background: var(--accent, var(--gold));
-  opacity: 0.5;
+  opacity: 0.55;
 }
 
 .book-spine .band {
   position: absolute;
-  bottom: 28%;
+  bottom: 42px;
   left: 0;
   right: 0;
-  height: 14px;
+  height: 12px;
   background: var(--accent, var(--gold));
-  opacity: 0.85;
+  opacity: 0.88;
+  pointer-events: none;
 }
 
 .book-title-spine {
   writing-mode: vertical-rl;
   text-orientation: mixed;
   font-family: var(--font-serif);
-  font-size: 0.62rem;
-  letter-spacing: 0.08em;
-  color: rgba(247, 243, 235, 0.92);
-  max-height: 55%;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: var(--spine-fs, 0.7rem);
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: rgba(247, 243, 235, 0.95);
+  /* Full title — height is sized in JS to fit */
+  max-height: none;
+  overflow: visible;
   white-space: nowrap;
-  line-height: 1.2;
+  line-height: 1.15;
   z-index: 1;
+  margin-top: 10px;
+  flex: 1 1 auto;
+  display: block;
+  text-align: left;
 }
 
 .book-year-spine {
-  font-size: 0.55rem;
-  color: rgba(247, 243, 235, 0.55);
-  letter-spacing: 0.05em;
+  position: absolute;
+  bottom: 12px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 0.62rem;
+  font-variant-numeric: tabular-nums;
+  color: rgba(247, 243, 235, 0.6);
+  letter-spacing: 0.06em;
   z-index: 1;
 }
 
@@ -984,8 +998,17 @@ body::before {
   }
 
   .book {
-    width: 40px;
-    height: 140px;
+    /* Keep JS-driven height; slightly narrower on small screens */
+    width: max(52px, calc(var(--book-w, 62px) * 0.9));
+  }
+
+  .book-title-spine {
+    letter-spacing: 0.06em;
+  }
+
+  .shelf {
+    min-height: calc(240px + 9.5rem);
+    gap: 6px;
   }
 
   .book-tooltip {

@@ -1,11 +1,56 @@
 /**
  * Wealth 財 — Digital Library Application
- * Shelves, hover tooltips, modal with meat paragraphs & applications
+ * Category shelves, hover tooltips, modal with meat paragraphs & applications
  */
 (function () {
   "use strict";
 
-  const BOOKS_PER_SHELF = 12;
+  /** Preferred library aisle order (unknown categories sort alphabetically after) */
+  const CATEGORY_ORDER = [
+    "Value Investing",
+    "Growth Investing",
+    "Stock Picking",
+    "Indexing",
+    "Markets",
+    "Allocation",
+    "Risk",
+    "Uncertainty",
+    "Trading",
+    "Analysis",
+    "Quant",
+    "Special Situations",
+    "Research",
+    "Behavior",
+    "Psychology",
+    "Mental Models",
+    "Decision Making",
+    "Personal Finance",
+    "Foundations",
+    "Mindset",
+    "Lifestyle",
+    "Wealth Habits",
+    "Debt",
+    "Habits",
+    "Business",
+    "Institutional",
+    "Theory",
+    "History",
+    "Biography",
+    "Crisis",
+    "Scandal",
+    "Wall Street",
+    "Deals",
+    "Macro",
+    "Economics",
+    "Inequality",
+    "Inflation",
+    "Money",
+    "Banking",
+    "Crypto",
+    "Ethics",
+    "Strategy",
+  ];
+
   const state = {
     filter: "All",
     query: "",
@@ -19,9 +64,18 @@
     return window.WEALTH_BOOKS || [];
   }
 
+  function categoryRank(cat) {
+    const i = CATEGORY_ORDER.indexOf(cat);
+    return i === -1 ? 1000 : i;
+  }
+
   function uniqueCategories(books) {
-    const set = new Set(books.map((b) => b.category));
-    return ["All", ...[...set].sort()];
+    const set = new Set(books.map((b) => b.category).filter(Boolean));
+    const sorted = [...set].sort((a, b) => {
+      const d = categoryRank(a) - categoryRank(b);
+      return d !== 0 ? d : a.localeCompare(b);
+    });
+    return ["All", ...sorted];
   }
 
   function filterBooks(books) {
@@ -42,15 +96,53 @@
     return list;
   }
 
-  function chunk(arr, size) {
-    const out = [];
-    for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
-    return out;
+  /** Group filtered books into category shelves (sorted by library order) */
+  function groupByCategory(books) {
+    const map = new Map();
+    books.forEach((book) => {
+      const cat = book.category || "General";
+      if (!map.has(cat)) map.set(cat, []);
+      map.get(cat).push(book);
+    });
+
+    return [...map.entries()]
+      .sort((a, b) => {
+        const d = categoryRank(a[0]) - categoryRank(b[0]);
+        return d !== 0 ? d : a[0].localeCompare(b[0]);
+      })
+      .map(([category, items]) => ({
+        category,
+        books: items.slice().sort((a, b) => {
+          const y = (a.year || 0) - (b.year || 0);
+          return y !== 0 ? y : a.title.localeCompare(b.title);
+        }),
+      }));
   }
 
-  function truncate(str, n) {
-    if (!str) return "";
-    return str.length > n ? str.slice(0, n - 1) + "…" : str;
+  /** Spine height/width so the full title fits vertically */
+  function spineMetrics(title) {
+    const len = (title || "").length;
+    // Vertical text: ~px per character at base spine font
+    let fontRem = 0.72;
+    let pxPerChar = 9.4;
+    if (len > 38) {
+      fontRem = 0.56;
+      pxPerChar = 7.4;
+    } else if (len > 28) {
+      fontRem = 0.62;
+      pxPerChar = 8.2;
+    } else if (len > 18) {
+      fontRem = 0.68;
+      pxPerChar = 8.9;
+    }
+
+    const chrome = 78; // padding + band + year
+    const height = Math.round(
+      Math.min(460, Math.max(260, chrome + len * pxPerChar + 12))
+    );
+    // Wider spines read better for vertical titles
+    const width = len > 32 ? 72 : len > 20 ? 66 : 60;
+    return { height, width, fontRem };
   }
 
   function renderFilters(categories) {
@@ -75,9 +167,14 @@
     div.style.setProperty("--spine", book.spine || "#2c3e50");
     div.style.setProperty("--accent", book.accent || "#c4a35a");
 
+    const m = spineMetrics(book.title);
+    div.style.setProperty("--book-h", `${m.height}px`);
+    div.style.setProperty("--book-w", `${m.width}px`);
+    div.style.setProperty("--spine-fs", `${m.fontRem}rem`);
+
     div.innerHTML = `
       <div class="book-spine">
-        <span class="book-title-spine">${escapeHtml(truncate(book.title, 28))}</span>
+        <span class="book-title-spine">${escapeHtml(book.title)}</span>
         <span class="band" aria-hidden="true"></span>
         <span class="book-year-spine">${book.year || ""}</span>
       </div>
@@ -113,26 +210,42 @@
       return;
     }
 
-    $("#book-count") &&
-      ($("#book-count").textContent = `${books.length} volumes`);
+    const shelves = groupByCategory(books);
+    const catCount = shelves.length;
 
-    const shelves = chunk(books, BOOKS_PER_SHELF);
+    $("#book-count") &&
+      ($("#book-count").textContent =
+        catCount === 1
+          ? `${books.length} volumes · ${shelves[0].category}`
+          : `${books.length} volumes · ${catCount} shelves`);
+
     container.innerHTML = "";
 
-    shelves.forEach((shelfBooks, i) => {
+    shelves.forEach((shelf, i) => {
       const row = document.createElement("div");
       row.className = "shelf-row";
-      const start = i * BOOKS_PER_SHELF + 1;
-      const end = start + shelfBooks.length - 1;
+      row.dataset.category = shelf.category;
+      const n = shelf.books.length;
+      const volLabel = n === 1 ? "1 volume" : `${n} volumes`;
 
       row.innerHTML = `
-        <div class="shelf-label">Shelf ${String(i + 1).padStart(2, "0")} · ${start}–${end}</div>
-        <div class="shelf"></div>
+        <div class="shelf-label">
+          <span class="shelf-cat">${escapeHtml(shelf.category)}</span>
+          <span class="shelf-meta">${volLabel}</span>
+        </div>
+        <div class="shelf" role="list" aria-label="${escapeHtml(shelf.category)}"></div>
         <div class="shelf-plank" aria-hidden="true"></div>
       `;
 
-      const shelf = row.querySelector(".shelf");
-      shelfBooks.forEach((book) => shelf.appendChild(bookElement(book)));
+      // Stagger entrance slightly by aisle index
+      row.style.animationDelay = `${Math.min(i * 0.05, 0.45)}s`;
+
+      const shelfEl = row.querySelector(".shelf");
+      shelf.books.forEach((book) => {
+        const el = bookElement(book);
+        el.setAttribute("role", "listitem");
+        shelfEl.appendChild(el);
+      });
       container.appendChild(row);
     });
   }
